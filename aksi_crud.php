@@ -1,7 +1,6 @@
 <?php
 include "koneksi.php"; // Koneksi database
-include 'encryption/index.php'; // Enkripsi Blowfish
-$sharedKey = hash('sha256', $sharedKeyAlice, true); // Kunci untuk enkripsi
+include 'encryption/index.php'; // Enkripsi Blowfish dan modExp()
 
 // Fungsi untuk menambahkan data
 function tambahData($koneksi, $sharedKey, $nama, $jenis_kelamin, $ttl, $nim, $ipk, $jurusan, $univ, $tahun_masuk, $nomor_rekening, $nomor_hp, $ket)
@@ -70,11 +69,13 @@ function getDataUser($koneksi, $sharedKey)
     $query = mysqli_query($koneksi, "SELECT * FROM tuser");
     $dataUser = [];
     while ($data = mysqli_fetch_array($query)) {
+        // Dekripsi data dengan Blowfish
         $decryptedTtl = blowfishDecrypt($sharedKey, $data['ttl']);
         $decryptedNim = blowfishDecrypt($sharedKey, $data['nim']);
         $decryptedNomorRekening = blowfishDecrypt($sharedKey, $data['nomor_rekening']);
         $decryptedNomorHp = blowfishDecrypt($sharedKey, $data['nomor_hp']);
 
+        // Menambahkan data yang telah didekripsi ke dalam array
         $dataUser[] = [
             'id' => $data['id'],
             'nama' => $data['nama'],
@@ -92,4 +93,29 @@ function getDataUser($koneksi, $sharedKey)
     }
     return $dataUser;
 }
+
+// === Proses Diffie-Hellman untuk mendapatkan shared key === //
+$p = 23; // Bilangan prima
+$g = 5;  // Basis
+$privateAlice = 6; // Kunci privat Alice
+$privateBob = 15;  // Kunci privat Bob
+
+$publicAlice = modExp($g, $privateAlice, $p);
+$publicBob = modExp($g, $privateBob, $p);
+
+// Kunci rahasia bersama
+$sharedKeyAlice = modExp($publicBob, $privateAlice, $p);
+$sharedKeyBob = modExp($publicAlice, $privateBob, $p);
+
+if ($sharedKeyAlice !== $sharedKeyBob) {
+  echo "Kunci rahasia tidak cocok.\n";
+  exit;
+}
+
+// Perkuat kunci menggunakan OpenSSL HMAC (SHA-256)
+$sharedKeyStrong = hash_hmac('sha256', $sharedKeyAlice, 'secret_salt', true);
+
+// Ambil 16 byte pertama untuk digunakan dengan Blowfish
+$sharedKey = substr($sharedKeyStrong, 0, 16);
+
 ?>
