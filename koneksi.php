@@ -1,9 +1,9 @@
 <?php
 
 //Koneksi Database
-$server = "localhost";
-$user = "root";
-$password = "";
+$server = "103.175.221.170";
+$user = "myuser";
+$password = "myuser";
 $database = "db_diffiehelman_blowfish";
 
 //Buat Koneksi

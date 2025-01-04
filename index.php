@@ -15,7 +15,6 @@ if (isset($_GET['hapus_id'])) {
 }
 
 if (isset($_POST['tambah'])) {
-    $id = $_POST['id'];
     $nama = $_POST['nama'];
     $jenis_kelamin = $_POST['jenis_kelamin'];
     $ttl = $_POST['ttl'];
